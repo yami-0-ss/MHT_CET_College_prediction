@@ -5,6 +5,7 @@ import pickle
 import joblib
 import plotly.express as px
 import plotly.graph_objects as go
+import os
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -14,15 +15,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CUSTOM CSS STYLING (Professional Color Palette & Card UI) ---
+# --- CUSTOM CSS STYLING ---
 st.markdown("""
 <style>
-    /* Main Background & Font */
     .main {
         background-color: #f8fafc;
         font-family: 'Inter', sans-serif;
     }
-    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #0f172a;
         color: #f1f5f9;
@@ -31,7 +30,6 @@ st.markdown("""
         color: #cbd5e1 !important;
         font-weight: 500;
     }
-    /* Metric Cards */
     .metric-card {
         background: white;
         padding: 20px;
@@ -53,33 +51,30 @@ st.markdown("""
         font-weight: 700;
         margin-top: 5px;
     }
-    /* Headers */
-    h1, h2, h3 {
-        color: #0f172a;
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- LOAD MODEL SAFELY ---
+# --- LOAD MODEL ROBUSTLY ---
 @st.cache_resource
 def load_model():
     model_path = "MHT_CET_model_under_19MB.pkl"
+    if not os.path.exists(model_path):
+        return None, f"File '{model_path}' not found in directory."
     try:
-        # Try joblib first, fall back to pickle
         try:
             model = joblib.load(model_path)
-        except:
+        except Exception:
             with open(model_path, "rb") as f:
                 model = pickle.load(f)
-        return model
+        return model, None
     except Exception as e:
-        return None
+        return None, str(e)
 
-model = load_model()
+model, load_error = load_model()
 
-# --- SIDEBAR: USER INPUT PANEL ---
+# --- SIDEBAR INPUT PANEL ---
 st.sidebar.header("🎯 Student Profile Input")
-st.sidebar.markdown("Enter your details to generate predictive analytics.")
+st.sidebar.markdown("Configure parameters for predictions.")
 
 with st.sidebar.form("prediction_form"):
     percentile = st.slider("MHT-CET Percentile", min_value=0.0, max_value=100.0, value=92.5, step=0.1)
@@ -93,21 +88,22 @@ with st.sidebar.form("prediction_form"):
 
 # --- MAIN DASHBOARD AREA ---
 st.title("🎓 MHT-CET Intelligence & College Predictor Dashboard")
-st.markdown("Gain comprehensive admission insights, branch cutoff trends, and personalized college recommendations powered by your trained machine learning model.")
+st.markdown("Comprehensive admission analytics, historical cutoffs, and performance modeling.")
 
 if model is None:
-    st.error("⚠️ Model file `MHT_CET_model_under_19MB.pkl` not found in the root directory! Please ensure it is uploaded alongside `app.py`.")
+    st.error(f"⚠️ Model Loading Error: {load_error}")
+    st.info("Please verify that `MHT_CET_model_under_19MB.pkl` is pushed to your GitHub repository root folder.")
 else:
-    # --- TOP METRICS ROW ---
+    # --- METRICS ROW ---
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown("""
+        st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-title">Input Percentile</div>
-                <div class="metric-value">{}%</div>
+                <div class="metric-value">{percentile}%</div>
             </div>
-        """.format(percentile), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
         
     with col2:
         st.markdown("""
@@ -126,22 +122,20 @@ else:
         """, unsafe_allow_html=True)
         
     with col4:
-        st.markdown("""
+        st.markdown(f"""
             <div class="metric-card" style="border-left-color: #ec4899;">
                 <div class="metric-title">Target Branch</div>
-                <div class="metric-value" style="font-size: 18px; margin-top: 8px;">{}</div>
+                <div class="metric-value" style="font-size: 18px; margin-top: 8px;">{preferred_branch}</div>
             </div>
-        """.format(preferred_branch), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    # --- TABS FOR ORGANIZED ANALYTICS ---
+    # --- TABS FOR ANALYTICS ---
     tab1, tab2, tab3 = st.tabs(["📊 Predictive Insights", "📈 Cutoff Trends Analysis", "🏫 College Recommendations"])
 
     with tab1:
         st.subheader("Performance & Probability Distribution")
-        
         col_a, col_b = st.columns(2)
         with col_a:
-            # Simulated probability gauge or breakdown
             fig_gauge = go.Figure(go.Indicator(
                 mode = "gauge+number",
                 value = percentile,
@@ -161,14 +155,13 @@ else:
             st.plotly_chart(fig_gauge, use_container_width=True)
             
         with col_b:
-            # Category vs Average Cutoff trend simulation chart
             categories = ['OPEN', 'OBC', 'SC', 'ST', 'EWS']
             avg_cutoffs = [95.2, 91.5, 78.4, 62.1, 93.8]
             fig_bar = px.bar(
                 x=categories, 
                 y=avg_cutoffs, 
                 labels={'x': 'Category', 'y': 'Avg Percentile Required'},
-                title="<b>Category-wise Benchmark Cutoffs for Top Colleges</b>",
+                title="<b>Category-wise Benchmark Cutoffs</b>",
                 color=avg_cutoffs,
                 color_continuous_scale="Viridis"
             )
@@ -176,9 +169,7 @@ else:
             st.plotly_chart(fig_bar, use_container_width=True)
 
     with tab2:
-        st.subheader("Historical Branch Cutoff Trends (2023 - 2025)")
-        
-        # Sample historical trend data
+        st.subheader("Historical Branch Cutoff Trends")
         years = ['2023', '2024', '2025']
         trend_data = {
             "Computer Engineering": [98.2, 98.5, 98.8],
@@ -186,7 +177,6 @@ else:
             "AI & Data Science": [94.0, 95.2, 96.1],
             "Electronics & Telecom": [90.5, 91.2, 92.0]
         }
-        
         fig_line = go.Figure()
         for branch, values in trend_data.items():
             fig_line.add_trace(go.Scatter(x=years, y=values, mode='lines+markers', name=branch))
@@ -202,9 +192,6 @@ else:
 
     with tab3:
         st.subheader("Matched Institutions List")
-        st.markdown("Based on your profile inputs, here are the top predicted college options:")
-        
-        # Mock recommendation table based on user percentile
         colleges_df = pd.DataFrame({
             "College Name": [
                 "COEP Technological University, Pune",
@@ -218,9 +205,8 @@ else:
             "Estimated Match": ["98%", "95%", "91%", "88%", "85%", "80%"],
             "Status": ["Ambitious", "Competitive", "Safe", "Safe", "Very Safe", "Very Safe"]
         })
-        
         st.dataframe(colleges_df, use_container_width=True, hide_index=True)
 
 # --- FOOTER ---
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px;'>MHT-CET Analytics Engine • Optimized for Render Cloud Deployment</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 13px;'>MHT-CET Analytics Engine • Optimized for Render</p>", unsafe_allow_html=True)
