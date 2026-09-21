@@ -15,7 +15,7 @@ try:
 except Exception as e:
     print(f"Error loading model: {e}")
 
-# HTML Template updated for 5 input features
+# HTML Template updated to handle text/categorical inputs cleanly
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -46,7 +46,7 @@ HTML_TEMPLATE = """
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        <!-- Left Column: Prediction Form (5 Features) -->
+        <!-- Left Column: Prediction Form -->
         <section class="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
             <div>
                 <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -54,34 +54,34 @@ HTML_TEMPLATE = """
                 </h2>
                 <form method="POST" action="/" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 1 (e.g., Physics)</label>
-                        <input type="number" step="any" name="f1" required 
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 1</label>
+                        <input type="text" name="f1" required 
                             class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="Value 1">
+                            placeholder="Enter number or text">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 2 (e.g., Chemistry)</label>
-                        <input type="number" step="any" name="f2" required 
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 2</label>
+                        <input type="text" name="f2" required 
                             class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="Value 2">
+                            placeholder="Enter number or text">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 3 (e.g., Maths)</label>
-                        <input type="number" step="any" name="f3" required 
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 3</label>
+                        <input type="text" name="f3" required 
                             class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="Value 3">
+                            placeholder="Enter number or text">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 4 (e.g., Extra Score 1)</label>
-                        <input type="number" step="any" name="f4" required 
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 4</label>
+                        <input type="text" name="f4" required 
                             class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="Value 4">
+                            placeholder="Enter number or text">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 5 (e.g., Extra Score 2)</label>
-                        <input type="number" step="any" name="f5" required 
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 5</label>
+                        <input type="text" name="f5" required 
                             class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="Value 5">
+                            placeholder="Enter number or text">
                     </div>
                     <button type="submit" 
                         class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow transition duration-200 text-sm mt-2">
@@ -163,23 +163,35 @@ HTML_TEMPLATE = """
 </html>
 """
 
+def parse_val(val):
+    """Automatically converts numbers to float/int, keeps text strings as they are."""
+    if val is None:
+        return 0
+    val_str = val.strip()
+    try:
+        if "." in val_str:
+            return float(val_str)
+        return int(val_str)
+    except ValueError:
+        return val_str
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     prediction = None
     if request.method == "POST":
         try:
-            # Collect all 5 feature inputs from the form
-            f1 = float(request.form.get("f1", 0))
-            f2 = float(request.form.get("f2", 0))
-            f3 = float(request.form.get("f3", 0))
-            f4 = float(request.form.get("f4", 0))
-            f5 = float(request.form.get("f5", 0))
+            # Safely parse inputs (supports both numbers and strings)
+            f1 = parse_val(request.form.get("f1"))
+            f2 = parse_val(request.form.get("f2"))
+            f3 = parse_val(request.form.get("f3"))
+            f4 = parse_val(request.form.get("f4"))
+            f5 = parse_val(request.form.get("f5"))
             
             if model is not None:
-                # Format as a 2D array with exactly 5 features
-                features = np.array([[f1, f2, f3, f4, f5]])
+                # Pass features array with object dtype to handle mixed string/numeric data
+                features = np.array([[f1, f2, f3, f4, f5]], dtype=object)
                 pred = model.predict(features)
-                prediction = f"{round(float(pred[0]), 2)}"
+                prediction = str(pred[0])
             else:
                 prediction = "Model file not found or loaded."
         except Exception as e:
