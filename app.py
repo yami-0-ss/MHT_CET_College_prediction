@@ -12,13 +12,10 @@ model = None
 try:
     if os.path.exists(MODEL_PATH):
         model = joblib.load(MODEL_PATH)
-    else:
-        # Fallback or placeholder if file is missing during local test
-        model = None
 except Exception as e:
     print(f"Error loading model: {e}")
 
-# HTML Template with Professional Dashboard Styling (Tailwind CSS)
+# HTML Template updated for 5 input features
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -49,30 +46,42 @@ HTML_TEMPLATE = """
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        <!-- Left Column: Prediction Form -->
+        <!-- Left Column: Prediction Form (5 Features) -->
         <section class="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
             <div>
                 <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <span>📊</span> Student Parameters
+                    <span>📊</span> Model Parameters (5 Inputs)
                 </h2>
-                <form method="POST" action="/" class="space-y-4">
+                <form method="POST" action="/" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Physics Marks (Out of 100)</label>
-                        <input type="number" step="0.1" name="physics" required 
-                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="e.g., 75.5">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 1 (e.g., Physics)</label>
+                        <input type="number" step="any" name="f1" required 
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                            placeholder="Value 1">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Chemistry Marks (Out of 100)</label>
-                        <input type="number" step="0.1" name="chemistry" required 
-                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="e.g., 68.0">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 2 (e.g., Chemistry)</label>
+                        <input type="number" step="any" name="f2" required 
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                            placeholder="Value 2">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Mathematics Marks (Out of 100)</label>
-                        <input type="number" step="0.1" name="maths" required 
-                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-                            placeholder="e.g., 85.0">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 3 (e.g., Maths)</label>
+                        <input type="number" step="any" name="f3" required 
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                            placeholder="Value 3">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 4 (e.g., Extra Score 1)</label>
+                        <input type="number" step="any" name="f4" required 
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                            placeholder="Value 4">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Feature 5 (e.g., Extra Score 2)</label>
+                        <input type="number" step="any" name="f5" required 
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                            placeholder="Value 5">
                     </div>
                     <button type="submit" 
                         class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg shadow transition duration-200 text-sm mt-2">
@@ -81,8 +90,8 @@ HTML_TEMPLATE = """
                 </form>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-400 text-center">
-                Securely powered by Vercel Serverless & Scikit-Learn
+            <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 text-center">
+                Vercel Serverless Deployment
             </div>
         </section>
 
@@ -117,9 +126,9 @@ HTML_TEMPLATE = """
                 {% if prediction is not none %}
                     <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>
-                            <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Estimated Percentile / Score</span>
+                            <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Estimated Result / Score</span>
                             <div class="text-4xl font-extrabold text-indigo-900 mt-1">{{ prediction }}</div>
-                            <p class="text-xs text-indigo-700 mt-1">Based on provided subject scores and historical cutoff models.</p>
+                            <p class="text-xs text-indigo-700 mt-1">Evaluated successfully using all 5 model features.</p>
                         </div>
                         <div class="bg-white px-4 py-3 rounded-lg border border-indigo-200 text-center shadow-sm">
                             <span class="block text-xs text-slate-500 font-semibold">Status</span>
@@ -128,7 +137,7 @@ HTML_TEMPLATE = """
                     </div>
                 {% else %}
                     <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center text-slate-400">
-                        <p class="text-sm font-medium">Enter your marks on the left panel and click <strong>Calculate & Predict</strong> to view insights.</p>
+                        <p class="text-sm font-medium">Enter all 5 parameters on the left panel and click <strong>Calculate & Predict</strong>.</p>
                     </div>
                 {% endif %}
             </div>
@@ -149,7 +158,8 @@ HTML_TEMPLATE = """
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
         &copy; 2026 MHT CET Analytics Engine. Deployed on Vercel.
-    </body>
+    </footer>
+</body>
 </html>
 """
 
@@ -158,20 +168,20 @@ def index():
     prediction = None
     if request.method == "POST":
         try:
-            p = float(request.form.get("physics", 0))
-            c = float(request.form.get("chemistry", 0))
-            m = float(request.form.get("maths", 0))
+            # Collect all 5 feature inputs from the form
+            f1 = float(request.form.get("f1", 0))
+            f2 = float(request.form.get("f2", 0))
+            f3 = float(request.form.get("f3", 0))
+            f4 = float(request.form.get("f4", 0))
+            f5 = float(request.form.get("f5", 0))
             
             if model is not None:
-                # Assuming model takes a 2D array feature vector [physics, chemistry, maths]
-                features = np.array([[p, c, m]])
+                # Format as a 2D array with exactly 5 features
+                features = np.array([[f1, f2, f3, f4, f5]])
                 pred = model.predict(features)
                 prediction = f"{round(float(pred[0]), 2)}"
             else:
-                # Fallback mock calculation if model PKL isn't fully structured for these exact inputs
-                total_avg = (p + c + m) / 3.0
-                mock_percentile = min(99.99, round(total_avg * 1.25, 2))
-                prediction = f"{mock_percentile} percentile (Demo)"
+                prediction = "Model file not found or loaded."
         except Exception as e:
             prediction = f"Error during prediction: {str(e)}"
 
