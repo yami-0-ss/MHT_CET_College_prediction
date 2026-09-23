@@ -249,13 +249,11 @@ HTML_TEMPLATE = """
         });
 
         function renderDashboard(data) {
-            // Update Stats
             document.getElementById('eligibleCount').innerText = data.matched_colleges.length;
             document.getElementById('avgProbability').innerText = data.high_prob_count + " Options";
             document.getElementById('tierBand').innerText = data.tier_band;
             document.getElementById('tierDesc').innerText = "Top " + (100 - data.user_percentile).toFixed(2) + "% percentile range";
 
-            // Update Table
             const tbody = document.getElementById('collegeTableBody');
             tbody.innerHTML = '';
 
@@ -290,7 +288,6 @@ HTML_TEMPLATE = """
                 `;
             });
 
-            // Update Chart
             renderChart(chartLabels, chartCutoffs, userPercentiles);
         }
 
@@ -394,7 +391,6 @@ def predict():
                 "probability": prob
             })
 
-    # Sort matched colleges by cutoff score
     matched = sorted(matched, key=lambda x: x['cutoff'], reverse=True)
 
     return jsonify({
@@ -404,9 +400,6 @@ def predict():
         "high_prob_count": high_prob_count
     })
 
-# Vercel Serverless Function Handler
-def handler(event, context):
-    return app(event, context)
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
