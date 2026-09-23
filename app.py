@@ -1,93 +1,69 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import pickle
 import os
-import plotly.express as px
-import plotly.graph_objects as go
+import joblib
+import numpy as np
+import pandas as pd
+from flask import Flask, render_template, request, jsonify
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(
-    page_title="MHT-CET Smart Predictor & Analytics",
-    page_icon="🎓",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+app = Flask(__name__, template_folder="../templates")
 
-# --- CUSTOM PROFESSIONAL CSS STYLING ---
-st.markdown("""
-    
-""", unsafe_allow_html=True)
+# Resolve model path dynamically for Vercel's serverless environment
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "MHT_CET_model_under_19MB.pkl")
 
-# --- MODEL LOADING WITH CACHING & ERROR HANDLING ---
-MODEL_PATH = "MHT_CET_model_under_19MB.pkl"
+model = None
+try:
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+except Exception as e:
+    print(f"Error loading model: {e}")
 
-@st.cache_resource
-def load_model():
-    if not os.path.exists(MODEL_PATH):
-        return None
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
+
+@app.route("/predict", methods=["POST"])
+def predict():
     try:
-        with open(MODEL_PATH, "rb") as f:
-            model = pickle.load(f)
-        return model
+        data = request.get_json(force=True)
+        percentile = float(data.get("percentile", 0.0))
+        category = data.get("category", "General")
+        branch = data.get("branch", "Computer Engineering")
+
+        if model is not None:
+            # Format inputs to match your pipeline's training schema
+            # Example DataFrame schema:
+            input_df = pd.DataFrame([{
+                "percentile": percentile,
+                "category": category,
+                "branch": branch
+            }])
+            
+            try:
+                prediction_raw = model.predict(input_df)[0]
+            except Exception:
+                # Fallback to numerical numpy array if model expects raw float array
+                prediction_raw = model.predict(np.array([[percentile]]))[0]
+            
+            pred_college = str(prediction_raw)
+        else:
+            pred_college = "Model not initialized"
+
+        # Calculate analytics metrics for dashboard visualization
+        competition_index = min(100.0, max(5.0, round((100.0 - percentile) * 1.8, 1)))
+        admission_chance = min(98.0, max(2.0, round((percentile / 100.0) ** 1.3 * 100, 1)))
+
+        return jsonify({
+            "status": "success",
+            "prediction": pred_college,
+            "metrics": {
+                "percentile": percentile,
+                "admission_chance": admission_chance,
+                "competition_index": competition_index
+            }
+        })
+
     except Exception as e:
-        st.error(f"Error loading model file: {e}")
-        return None
+        return jsonify({"status": "error", "message": str(e)}), 400
 
-model = load_model()
-
-# --- HEADER SECTION ---
-st.title("🎓 MHT-CET Admission & Performance Analytics Dashboard")
-st.markdown("Evaluate predicted percentiles, rank ranges, and college admission probabilities based on your exam performance.")
-st.markdown("---")
-
-# --- SIDEBAR INPUTS ---
-st.sidebar.header("📝 Candidate Parameters")
-st.sidebar.markdown("Configure your exam scores below:")
-
-physics_score = st.sidebar.slider("Physics Score (out of 100)", 0.0, 100.0, 75.0, 0.5)
-chemistry_score = st.sidebar.slider("Chemistry Score (out of 100)", 0.0, 100.0, 70.0, 0.5)
-math_score = st.sidebar.slider("Mathematics Score (out of 100)", 0.0, 100.0, 80.0, 0.5)
-
-total_score = physics_score + chemistry_score + math_score
-avg_score = total_score / 3.0
-
-category = st.sidebar.selectbox("Category", ["OPEN", "OBC", "SC", "ST", "VJ/DT", "NT-1", "NT-2", "NT-3", "EWS"])
-gender = st.sidebar.selectbox("Gender", ["Male", "Female", "Transgender"])
-home_uni = st.sidebar.selectbox("Home University", [
-    "University of Mumbai", 
-    "Savitribai Phule Pune University", 
-    "Shivaji University, Kolhapur", 
-    "Dr. Babasaheb Ambedkar Marathwada University", 
-    "Rashtrasant Tukadoji Maharaj Nagpur University",
-    "Other / Out of Maharashtra"
-])
-
-st.sidebar.markdown("---")
-predict_btn = st.sidebar.button("🚀 Run Prediction & Analytics")
-
-# --- MAIN CONTENT & ANALYTICS ---
-if model is None:
-    st.warning(f"⚠️ Model file `{MODEL_PATH}` was not detected in the working directory. Please upload your `.pkl` file to GitHub alongside `app.py`.")
-    
-    # Preview Dashboard metrics while model is loading
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total PCM Score", f"{total_score:.1f} / 300")
-    with col2:
-        st.metric("Estimated Percentile", "94.5% (Sample)")
-    with col3:
-        st.metric("Projected Rank Range", "12,000 - 15,000")
-else:
-    try:
-        # Construct input array for model prediction 
-        # (Note: Adjust column names if your trained pipeline requires specific feature labels)
-        input_data = pd.DataFrame([[physics_score, chemistry_score, math_score, total_score]], 
-                                  columns=['Physics', 'Chemistry', 'Mathematics', 'Total'])
-        
-        prediction = model.predict(input_data)[0]
-        
-        # Top Metrics Display
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(f"""
+# Entry point for local testing
+if __name__ == "__main__":
+    app.run(debug=True, port=3000)
