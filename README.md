@@ -59,6 +59,7 @@ Pickle	Model serialization
 Render	Deployment
 GitHub	Version control
 🤖 Machine Learning Workflow
+
 1. Data Collection
 
 Collected MHT-CET-related college admission data containing student performance and college/course information.
@@ -68,6 +69,7 @@ Handled missing values
 Cleaned data
 Converted categorical variables
 Prepared features for machine learning
+
 3. Feature Engineering
 
 Relevant admission features such as marks, percentile, rank, category, and other parameters were prepared for model training.
@@ -89,27 +91,42 @@ with open("MHT_CET_model.pkl", "wb") as file:
 The application was deployed on Render and connected with the trained machine learning model.
 
 📂 Project Structure
+
 MHT-CET-College-Prediction/
 │
+
 ├── app.py
+
 ├── MHT_CET_model.pkl
+
 ├── requirements.txt
+
 ├── README.md
 │
 ├── templates/
+
 │   └── index.html
 │
 ├── static/
+
 │   └── style.css
 │
 └── dataset/
+
     └── mht_cet_data.csv
+    
 ▶️ How to Run Locally
+
 Step 1: Clone the Repository
+
 git clone https://github.com/your-username/MHT-CET-College-Prediction.git
+
 Step 2: Open the Project
+
 cd MHT-CET-College-Prediction
+
 Step 3: Create Virtual Environment
+
 python -m venv venv
 
 Activate it on Windows:
@@ -121,6 +138,7 @@ Step 5: Run the Application
 python app.py
 Step 6: Open in Browser
 http://127.0.0.1:5000/
+
 📦 Requirements
 
 Example requirements.txt:
@@ -159,7 +177,7 @@ Add user authentication and prediction history
 
 Yamini More
 
-Aspiring Data Analyst / Data Scientist
+ Data Scientist
 
 Skills Demonstrated
 
